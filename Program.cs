@@ -6,15 +6,18 @@ using Microsoft.AspNetCore.Diagnostics;
 
 using EnterpriseWeb.Areas.Identity.Data;
 using EnterpriseWeb.Areas.Identity.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<EnterpriseWebIdentityDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("EnterpriseWebIdentityDbContextConnection") ?? throw new InvalidOperationException("Connection string 'FPTBOOK_STOREIdentityDbContextConnection' not found.")));
+
 builder.Services.AddDefaultIdentity<IdeaUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<EnterpriseWebIdentityDbContext>();
+
 builder.Services.AddDbContext<EnterpriseWebIdentityDbContext>(options =>
-options.UseSqlServer("EnterpriseWebIdentityDbContextConnection"));
+    options.UseSqlServer("EnterpriseWebIdentityDbContextConnection"));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -39,39 +42,32 @@ using (var scope = app.Services.CreateScope())
     await ContextSeed.SeedSuperAdminAsync(userManager, roleManager);
 }
 
-// Configure the HTTP request pipeline.
+// Add the following code
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler(errorApp =>
-{
-    errorApp.Run(async context =>
     {
-        context.Response.StatusCode = 500; // or another Status code
-        context.Response.ContentType = "text/html";
-
-        await context.Response.WriteAsync("<html><body>\r\n");
-        await context.Response.WriteAsync("Error Page - Customized for Duplicate Data!<br><br>\r\n");
-
-        var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
-        if (exceptionHandlerPathFeature?.Error is DbUpdateException)
+        errorApp.Run(async context =>
         {
-            await context.Response.WriteAsync("<h2>Duplicate data found!</h2>\r\n");
-            await context.Response.WriteAsync("<p>Please enter unique data.</p>\r\n");
-            // You can also add a link to redirect the user back to the input form.
-        }
+            context.Response.StatusCode = 500; // or another Status code
+            context.Response.ContentType = "text/html";
 
-        await context.Response.WriteAsync("</body></html>\r\n");
-        await context.Response.CompleteAsync();
+            await context.Response.WriteAsync("<html><body>\r\n");
+            await context.Response.WriteAsync("Error Page - Customized for Duplicate Data!<br><br>\r\n");
+
+            var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+            if (exceptionHandlerPathFeature?.Error is DbUpdateException)
+            {
+                await context.Response.WriteAsync("<h2>Duplicate data found!</h2>\r\n");
+                await context.Response.WriteAsync("<p>Please enter unique data.</p>\r\n");
+                // You can also add a link to redirect the user back to the input form.
+            }
+
+            await context.Response.WriteAsync("</body></html>\r\n");
+            await context.Response.CompleteAsync();
+        });
     });
-});
 }
-
-// if (!app.Environment.IsDevelopment())
-// {
-    
-// }
-
-
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
